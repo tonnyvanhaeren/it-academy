@@ -11,7 +11,8 @@ export const usersRoutes = <T extends BaseApp>(app: T) =>
           role: auth!.role
         }),
         {
-          authGuard: {}
+          authGuard: {},
+          detail: { tags: ["Auth"] },
         }
       )
       // admin-only route
@@ -19,8 +20,21 @@ export const usersRoutes = <T extends BaseApp>(app: T) =>
         ({ auth }) => `admin panel for ${auth!.userId}`,
         {
           authGuard: {
-            roles: ['admin']
-          }
+            roles: ['admin'],
+
+          },
+          detail: { tags: ["Auth"] },
+        }
+      )
+      // admin-only route
+      .get('/teacher',
+        ({ auth }) => `admin panel for ${auth!.userId}`,
+        {
+          authGuard: {
+            roles: ['teacher'],
+
+          },
+          detail: { tags: ["Auth"] },
         }
       )
   )

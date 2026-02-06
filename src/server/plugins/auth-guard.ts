@@ -44,6 +44,9 @@ const ensureRole = ({
     throw new Error('Valid access token required')
   }
 
+  // 1. Is de gebruiker een admin? Dan altijd toegang.
+  if (auth?.role === 'admin') return
+
   if (!roles || roles.length === 0) return
 
   const userRole = auth?.role

@@ -4,8 +4,7 @@ import type { BaseApp } from '../app'
 export const otherRoutes = <T extends BaseApp>(app: T) =>
   app
     .get('/public', () => 'public route')
-    .get(
-      '/private',
+    .get('/private',
       ({ auth }) => `hello ${auth!.userId}`,
       {
         authGuard: {}

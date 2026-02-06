@@ -10,7 +10,8 @@ export const createBaseApp = () =>
     .use(openapi({ references: fromTypes() }))
     .use(
       jwtAuthPlugin({
-        jwtSecret: process.env.JWT_SECRET!,
+        accessSecret: process.env.JWT_ACCESS_SECRET!,
+        refreshSecret: process.env.JWT_REFRESH_SECRET!,
         accessCookieName: 'accessToken',
         refreshCookieName: 'refreshToken'
       })

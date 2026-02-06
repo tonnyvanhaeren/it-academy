@@ -29,7 +29,8 @@ export type JwtAuthContext = {
 }
 
 export type JwtAuthPluginOptions = {
-  jwtSecret: string
+  accessSecret: string,
+  refreshSecret: string,
   accessCookieName?: string
   refreshCookieName?: string
   jwtName?: string
@@ -46,24 +47,20 @@ export type JwtAuthPluginOptions = {
  * - exposes helpers: issueTokens, setAuthCookies, clearAuthCookies
  */
 export const jwtAuthPlugin = ({
-  jwtSecret,
+  accessSecret,
+  refreshSecret,
   accessCookieName = 'accessToken',
   refreshCookieName = 'refreshToken',
-  jwtName = 'jwt',
   accessTokenExpiresInSec = 15 * 60,
   refreshTokenExpiresInSec = 7 * 24 * 60 * 60,
   cookieDomain,
   cookieSecure = true
 }: JwtAuthPluginOptions) =>
   new Elysia({ name: 'jwt-auth' })
-    .use(
-      jwt({
-        name: jwtName,
-        secret: jwtSecret
-      })
-    )
+    .use(jwt({ name: 'accessJwt', secret: accessSecret }))
+    .use(jwt({ name: 'refreshJwt', secret: refreshSecret }))
     .derive({ as: 'global' }, async (ctx): Promise<JwtAuthContext> => {
-      const { [jwtName]: jwtHelper, cookie, set } = ctx as any
+      const { accessJwt, refreshJwt, cookie } = ctx as any
 
       const accessToken = cookie[accessCookieName]?.value as string | undefined
       const refreshToken = cookie[refreshCookieName]?.value as string | undefined
@@ -81,7 +78,7 @@ export const jwtAuthPlugin = ({
         }
 
         if (accessToken) {
-          const payload = (await jwtHelper.verify(accessToken)) as JwtAuthPayload | false
+          const payload = (await accessJwt.verify(accessToken)) as JwtAuthPayload | false
           if (payload) {
             auth.userId = String(payload.sub)
             auth.role = payload.role
@@ -90,7 +87,7 @@ export const jwtAuthPlugin = ({
         }
 
         if (!auth.accessPayload && refreshToken) {
-          const payload = (await jwtHelper.verify(refreshToken)) as JwtAuthPayload | false
+          const payload = (await accessJwt.verify(refreshToken)) as JwtAuthPayload | false
           if (payload) {
             auth.userId = String(payload.sub)
             auth.role = payload.role
@@ -104,10 +101,10 @@ export const jwtAuthPlugin = ({
       }
 
       const issueTokens: JwtAuthContext['issueTokens'] = async payload => {
-        const accessToken = await jwtHelper.sign(payload, {
+        const accessToken = await accessJwt.sign(payload, {
           exp: Math.floor(Date.now() / 1000) + accessTokenExpiresInSec
         })
-        const refreshToken = await jwtHelper.sign(payload, {
+        const refreshToken = await refreshJwt.sign(payload, {
           exp: Math.floor(Date.now() / 1000) + refreshTokenExpiresInSec
         })
         return { accessToken, refreshToken }
