@@ -1,44 +1,39 @@
-// src/routes/auth.ts
-import { t } from 'elysia'
 import type { BaseApp } from '../app'
+import { LoginDto, RegisterDto } from '@/dto/auth.dto'
+import { AuthService } from '../services/authServices';
 
-// fake users
-const users = [
-  { id: '1', email: 'admin@example.com', password: 'admin', role: 'admin' },
-  { id: '2', email: 'user@example.com', password: 'user', role: 'user' }
-]
-
-const findUserByEmail = (email: string) => users.find(u => u.email === email)
+const authService = await AuthService.getInstance();
 
 // Export as a plugin so it inherits the parent app's context typings
 // (e.g. `auth`, `issueTokens`, `setAuthCookies`) when mounted via `.use(...)`.
 export const authRoutes = <T extends BaseApp>(app: T) =>
   app.group('/auth', app =>
     app
-      .post(
-        '/login',
+      .post('/login',
         async ({ body, issueTokens, setAuthCookies, set }) => {
-          const user = findUserByEmail(body.email)
-          if (!user || user.password !== body.password) {
-            set.status = 401
-            return { ok: false, message: 'Invalid credentials' }
-          }
+          const { email, password } = body;
+          const user = await authService.login(body)
 
           const tokens = await issueTokens({
             sub: user.id,
             role: user.role
           })
+
           setAuthCookies(tokens)
 
           return { ok: true }
         },
         {
-          body: t.Object({
-            email: t.String(),
-            password: t.String()
-          })
-        }
-      )
+          body: LoginDto,
+          detail: { tags: ["Auth"] },
+        })
+      .post('/register', async ({ body }) => {
+        return authService.register(body);
+      },
+        {
+          body: RegisterDto,
+          detail: { tags: ["Auth"] },
+        })
       .post('/refresh', async ({ auth, issueTokens, setAuthCookies, set }) => {
         if (!auth?.refreshPayload) {
           set.status = 401
@@ -50,9 +45,11 @@ export const authRoutes = <T extends BaseApp>(app: T) =>
         setAuthCookies(tokens)
 
         return { ok: true }
-      })
+      }, { detail: { tags: ["Auth"] }, })
       .post('/logout', ({ clearAuthCookies }) => {
         clearAuthCookies()
         return { ok: true }
+      }, {
+        detail: { tags: ["Auth"] },
       })
   )

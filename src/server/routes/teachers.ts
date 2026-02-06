@@ -7,7 +7,7 @@ export const teacherRoutes = <T extends BaseApp>(app: T) =>
       () => 'Lijst met docenten',
       {
         authGuard: {
-          roles: ['admin']
+          roles: ['teacher']
         }
       }
     )

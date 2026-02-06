@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import { User } from "../../db/models/user.model";
 import { HttpError } from "../errors/http-error";
+import { connectDB } from "@/db/connection";
 
 interface RegisterInput {
   email: string;
@@ -22,8 +23,11 @@ type JwtHandler = {
 }
 
 class AuthService {
+
+
   async register(input: RegisterInput) {
     const { email, firstname, lastname, mobile, password } = input;
+    await connectDB();
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -54,6 +58,33 @@ class AuthService {
       firstname: user.firstname,
       lastname: user.lastname,
       role: user.role,
+    };
+  }
+
+  async checkUser(input: LoginInput) {
+    const { email, password } = input;
+
+    // Find user
+    const user = await User.findOne({ email });
+    if (!user) {
+      throw new HttpError("Invalid credentials", {
+        status: 401,
+        code: "INVALID_CREDENTIALS",
+      });
+    }
+      // Verify password
+    const isValidPassword = await bcrypt.compare(password, user.hashedPassword);
+    if (!isValidPassword) {
+      throw new HttpError("Invalid credentials", {
+        status: 401,
+        code: "INVALID_CREDENTIALS",
+      });
+    }
+
+    return {
+      id: user.id as string,
+      email: user.email as string,
+      role: user.role as string
     };
   }
 

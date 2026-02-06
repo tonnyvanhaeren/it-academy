@@ -5,8 +5,7 @@ export const usersRoutes = <T extends BaseApp>(app: T) =>
   app.group('/users', app =>
     app
       // any logged-in user
-      .get(
-        '/me',
+      .get('/me',
         ({ auth }) => ({
           userId: auth!.userId,
           role: auth!.role
@@ -16,8 +15,7 @@ export const usersRoutes = <T extends BaseApp>(app: T) =>
         }
       )
       // admin-only route
-      .get(
-        '/admin',
+      .get('/admin',
         ({ auth }) => `admin panel for ${auth!.userId}`,
         {
           authGuard: {

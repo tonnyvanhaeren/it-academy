@@ -121,6 +121,7 @@ export const jwtAuthPlugin = ({
         cookie[accessCookieName].sameSite = 'Lax'
         cookie[accessCookieName].path = '/'
         cookie[accessCookieName].secure = cookieSecure
+        cookie[accessCookieName].maxAge = accessTokenExpiresInSec
         if (cookieDomain) cookie[accessCookieName].domain = cookieDomain
 
         cookie[refreshCookieName].value = refreshToken
@@ -128,6 +129,7 @@ export const jwtAuthPlugin = ({
         cookie[refreshCookieName].sameSite = 'Lax'
         cookie[refreshCookieName].path = '/'
         cookie[refreshCookieName].secure = cookieSecure
+        cookie[refreshCookieName].maxAge = refreshTokenExpiresInSec
         if (cookieDomain) cookie[refreshCookieName].domain = cookieDomain
       }
 
