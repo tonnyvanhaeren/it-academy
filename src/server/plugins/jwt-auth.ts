@@ -4,6 +4,7 @@ import { jwt } from '@elysiajs/jwt'
 
 export type JwtAuthPayload = {
   sub: string
+  email: string,
   role?: string
   [key: string]: unknown
 }
@@ -12,6 +13,7 @@ export type JwtAuthContext = {
   auth: {
     userId: string
     role?: string
+    email: string
     accessToken?: string
     refreshToken?: string
     accessPayload?: JwtAuthPayload
@@ -70,6 +72,7 @@ export const jwtAuthPlugin = ({
       if (accessToken || refreshToken) {
         auth = {
           userId: '',
+          email: '',
           role: undefined,
           accessToken,
           refreshToken,
@@ -81,6 +84,7 @@ export const jwtAuthPlugin = ({
           const payload = (await accessJwt.verify(accessToken)) as JwtAuthPayload | false
           if (payload) {
             auth.userId = String(payload.sub)
+            auth.email = payload.email
             auth.role = payload.role
             auth.accessPayload = payload
           }
@@ -90,6 +94,7 @@ export const jwtAuthPlugin = ({
           const payload = (await accessJwt.verify(refreshToken)) as JwtAuthPayload | false
           if (payload) {
             auth.userId = String(payload.sub)
+            auth.email = payload.email
             auth.role = payload.role
             auth.refreshPayload = payload
           }

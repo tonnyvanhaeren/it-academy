@@ -16,6 +16,7 @@ export const authRoutes = <T extends BaseApp>(app: T) =>
 
           const tokens = await issueTokens({
             sub: user.id,
+            email: user.email,
             role: user.role
           })
 
@@ -40,8 +41,8 @@ export const authRoutes = <T extends BaseApp>(app: T) =>
           return { ok: false, message: 'No valid refresh token' }
         }
 
-        const { sub, role } = auth.refreshPayload
-        const tokens = await issueTokens({ sub, role })
+        const { sub, role, email } = auth.refreshPayload
+        const tokens = await issueTokens({ sub, email, role })
         setAuthCookies(tokens)
 
         return { ok: true }
