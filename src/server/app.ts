@@ -1,22 +1,14 @@
 import { Elysia } from 'elysia'
 import openapi, { fromTypes } from '@elysiajs/openapi'
-import { jwtAuthPlugin } from './plugins/jwt-auth'
-import { authGuardPlugin } from './plugins/auth-guard'
+// import { authGuardPlugin } from './plugins/auth-guard'
+import { authGuardPlugin } from './plugins/auth-guard-plugin'
 
 
 export const createBaseApp = () =>
 
   new Elysia({ prefix: 'api' })
     .use(openapi({ references: fromTypes() }))
-    .use(
-      jwtAuthPlugin({
-        accessSecret: process.env.ACCESS_TOKEN_SECRET!,
-        refreshSecret: process.env.REFRESH_TOKEN_SECRET!,
-        accessCookieName: 'accessToken',
-        refreshCookieName: 'refreshToken'
-      })
-    )
-    .use(authGuardPlugin())
+    .use(authGuardPlugin)
 
 export type BaseApp = ReturnType<typeof createBaseApp>
 

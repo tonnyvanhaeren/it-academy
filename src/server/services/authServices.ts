@@ -76,15 +76,13 @@ export class AuthService {
     };
   }
 
-
-
   // Now these functions are super clean!
   async getAllUsers() {
     return User.find({});
   }
 
   async getUserById(id: string) {
-    const user = User.findById(id);    
+    const user = User.findById(id);
     if (!user) {
       throw new HttpError("Not Found", {
         status: 404,
@@ -96,7 +94,7 @@ export class AuthService {
   }
 
   async getUserByEmail(email: string) {
-    const user = User.findOne({email});    
+    const user = User.findOne({ email });
     if (!user) {
       throw new HttpError("Not Found", {
         status: 404,
