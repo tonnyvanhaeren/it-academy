@@ -1,7 +1,8 @@
-import { connectDB } from '@/db/connection';
+import { connectDB } from '../../db/mongodb'
 import { User } from '@/db/models/user.model';
 import { HttpError } from "../errors/http-error";
 import bcrypt from "bcryptjs";
+
 
 interface RegisterInput {
   email: string;
@@ -17,15 +18,17 @@ interface LoginInput {
   password: string;
 }
 
-
 export class AuthService {
-  private constructor() {
-    // Private constructor prevents 'new UserService()'
-  }
+  private static instance: AuthService | null = null;
 
-  public static async getInstance() {
-    await connectDB(); // Connect once here
-    return new AuthService();
+  private constructor() { }
+
+  public static async getInstance(): Promise<AuthService> {
+    if (!AuthService.instance) {
+      await connectDB(); // Herbruikbare connectie
+      AuthService.instance = new AuthService();
+    }
+    return AuthService.instance;
   }
 
   async register(input: RegisterInput) {
