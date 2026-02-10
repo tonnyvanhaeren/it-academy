@@ -6,7 +6,7 @@ export const testRoutes = <T extends BaseApp>(app: T) =>
       .get('/public', () => {
         return { ok: true }
       }, {
-        auth: true,
+        auth: false,
         detail: { tags: ["Tests"] },
       })
       .get('/admin', ({ requireRole, userId, role }) => {

@@ -2,6 +2,7 @@ import { connectDB } from '../../db/mongodb'
 import { User } from '@/db/models/user.model';
 import { HttpError } from "../errors/http-error";
 import bcrypt from "bcryptjs";
+import { formatMongooseDate } from '../utils/databaseUtils';
 
 
 interface RegisterInput {
@@ -52,17 +53,26 @@ export class AuthService {
     });
 
     return {
-      id: user._id,
+      id: user._id.toString(),
       email: user.email,
       firstname: user.firstname,
       lastname: user.lastname,
+      mobile: user.mobile,
       role: user.role,
+      createdAt: formatMongooseDate(user.createdAt)
     };
   }
 
   async login(input: LoginInput) {
     const { email, password } = input;
     const user = await this.getUserByEmail(email)
+
+    if (!user) {
+      throw new HttpError("User not found", {
+        status: 404,
+        code: "USER NOT FOUND",
+      });
+    }
 
     const isValidPassword = await bcrypt.compare(password, user.hashedPassword);
     if (!isValidPassword) {

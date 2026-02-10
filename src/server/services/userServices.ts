@@ -1,22 +1,6 @@
 import { connectDB } from '../../db/mongodb'
 import { User } from '@/db/models/user.model';
 import { HttpError } from "../errors/http-error";
-import bcrypt from "bcryptjs";
-
-
-interface RegisterInput {
-  email: string;
-  firstname: string;
-  lastname: string;
-  mobile: string;
-  password: string;
-  role?: "student" | "teacher" | "admin";
-}
-
-interface LoginInput {
-  email: string;
-  password: string;
-}
 
 export class UserService {
   private static instance: UserService | null = null;

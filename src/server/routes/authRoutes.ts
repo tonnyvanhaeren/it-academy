@@ -1,8 +1,10 @@
 import type { BaseApp } from '../app'
+import { t } from 'elysia';
 import { LoginDto, RegisterDto } from '@/dto/auth.dto'
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/jwtUtils';
 import { AuthService } from '../services/authServices';
 import { HttpError } from '../errors/http-error';
+import { Optional } from '@sinclair/typebox';
 
 
 const authService = await AuthService.getInstance();
@@ -13,7 +15,6 @@ export const authRoutes = <T extends BaseApp>(app: T) =>
   app.group('/auth', app =>
     app
       .post('/login', async ({ body, cookie }) => {
-        const { email, password } = body;
         const user = await authService.login(body)
 
         const accessToken = await signAccessToken({ sub: user.id, email: user.email, role: user.role });
@@ -36,17 +37,52 @@ export const authRoutes = <T extends BaseApp>(app: T) =>
         })
 
 
-        return { ok: true }
+        return { ok: true };
       },
         {
           body: LoginDto,
-          detail: { tags: ["Auth"] },
+          response: {
+            200: t.Object({ ok: t.Boolean() }),
+            401: t.Object({
+              message: t.String(),
+              code: t.String(),
+              status: t.String()
+            }),
+            404: t.Object({
+              message: t.String(),
+              code: t.String(),
+              status: t.String()
+            })
+          },
+          detail: { tags: ["Auth"], description: 'Set access and refresh cookies when successfull' },
         })
-      .post('/register', async ({ body }) => {
-        return authService.register(body);
+      .post('/register', async ({ body, set }) => {
+        const user = await authService.register(body);
+
+        set.status = 201
+        set.headers['location'] = `/users/id/${user.id}`
+
+        return { user }
       },
         {
           body: RegisterDto,
+          response: {
+            201: t.Object({
+              user: t.Object({
+                id: t.String(), email: t.String(), firstname: t.String(), lastname: t.String(), mobile: t.String(), role: t.String(), createdAt: t.String()
+              })
+            }),
+            409: t.Object({
+              message: t.String(),
+              code: t.String(),
+              status: t.String()
+            }),
+            422: t.Object({
+              message: t.String(),
+              code: t.String(),
+              status: t.String()
+            })
+          },
           detail: { tags: ["Auth"] },
         })
       .post('/refresh', async ({ cookie: { refresh } }) => {
@@ -82,8 +118,9 @@ export const authRoutes = <T extends BaseApp>(app: T) =>
         access.remove();
         refresh.remove();
 
-        return { ok: true }
+        return
       }, {
+
         detail: { tags: ["Auth"] },
       })
   )
