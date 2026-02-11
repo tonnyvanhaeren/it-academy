@@ -131,7 +131,7 @@ export const usersRoutes = <T extends BaseApp>(app: T) =>
       }, {
         auth: true,
         params: t.Object({
-          id: t.String()
+          id: t.String({ minLength: 24, error: 'MongoDb ObjectId is required' })
         }),
         response: {
           401: t.Object({

@@ -1,11 +1,8 @@
 import type { BaseApp } from '../app'
 import { t } from 'elysia';
-import { LoginDto, RegisterDto } from '@/dto/auth.dto'
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/jwtUtils';
 import { AuthService } from '../services/authServices';
 import { HttpError } from '../errors/http-error';
-import { Optional } from '@sinclair/typebox';
-
 
 const authService = await AuthService.getInstance();
 
@@ -37,12 +34,21 @@ export const authRoutes = <T extends BaseApp>(app: T) =>
         })
 
 
-        return { ok: true };
+        return;
       },
         {
-          body: LoginDto,
+          body: t.Object({
+            email: t.String({
+              format: 'email',
+              error: 'Vul een geldig e-mailadres in, bijvoorbeeld: antonius@voorbeeld.com'
+            }),
+            password: t.String({
+              minLength: 8,
+              error: 'Het wachtwoord moet minimaal 8 karakters lang zijn'
+            })
+          }),
           response: {
-            200: t.Object({ ok: t.Boolean() }),
+            200: t.Void(),
             401: t.Object({
               message: t.String(),
               code: t.String(),
@@ -52,7 +58,12 @@ export const authRoutes = <T extends BaseApp>(app: T) =>
               message: t.String(),
               code: t.String(),
               status: t.String()
-            })
+            }),
+            422: t.Object({
+              message: t.String(),
+              code: t.String(),
+              status: t.String()
+            }),
           },
           detail: { tags: ["Auth"], description: 'Set access and refresh cookies when successfull' },
         })
@@ -65,7 +76,15 @@ export const authRoutes = <T extends BaseApp>(app: T) =>
         return { user }
       },
         {
-          body: RegisterDto,
+          body: t.Object({
+            email: t.String({ format: "email", error: 'Email is noodzakelijk' }),
+            firstname: t.String({ minLength: 2, error: "Voornaam moet minstens 2 karakter lan zijn" }),
+            lastname: t.String({ minLength: 2, error: "familienaam moet minstens 2 karakter lan zijn" }),
+            mobile: t.String({
+              pattern: '^\\+32\\s\\d{3}\\s\\d{2}\\s\\d{2}\\s\\d{2}$', error: "mobile moet zijn als '+32 000 00 00 00'"
+            }),
+            password: t.String({ minLength: 8, error: 'Wachtwoord moet minstens 8 karakters lang zijn' }),
+          }),
           response: {
             201: t.Object({
               user: t.Object({
@@ -85,42 +104,71 @@ export const authRoutes = <T extends BaseApp>(app: T) =>
           },
           detail: { tags: ["Auth"] },
         })
-      .post('/refresh', async ({ cookie: { refresh } }) => {
-        const rawToken = refresh.value
+      .post('/refresh', async ({ cookie }) => {
+        const rawToken = cookie.refresh.value
 
-        if (rawToken === undefined || (typeof rawToken !== 'string')) {
-          throw new HttpError("No Refresh cookie || bad formatted", {
-            status: 401,
-            code: "INVALID_CREDENTIALS",
-          });
-        }
-
-        const payload = await verifyRefreshToken(rawToken);
-        console.log("Payload", payload)
-
-        // check if user exists
-        // recreate new refresh and access token and make cookies
-
-
-        // if (!auth?.refreshPayload) {
-        //   set.status = 401
-        //   return { ok: false, message: 'No valid refresh token' }
+        // if (rawToken === undefined || (typeof rawToken !== 'string')) {
+        //   throw new HttpError("No Refresh cookie || bad formatted", {
+        //     status: 401,
+        //     code: "INVALID_CREDENTIALS",
+        //   });
         // }
 
-        // const { sub, role, email } = auth.refreshPayload
-        // const tokens = await issueTokens({ sub, email, role })
-        // setAuthCookies(tokens)
+        const payload = await verifyRefreshToken(rawToken);
 
-        return { ok: true }
+        const user = await authService.getUserByEmail(payload.sub!);
+
+        const accessToken = await signAccessToken({ sub: user.id, email: user.email, role: user.role });
+        const refreshToken = await signRefreshToken({ sub: user.email });
+
+        cookie.access.set({
+          value: accessToken,
+          httpOnly: true,
+          secure: true,
+          sameSite: 'strict',
+          maxAge: 15 * 60 // 15 minuten
+        })
+
+        cookie.refresh.set({
+          value: refreshToken,
+          httpOnly: true,
+          secure: true,
+          sameSite: 'strict',
+          maxAge: 7 * 24 * 60 * 60 // 7 days
+        })
+
+        return
       },
-        { detail: { tags: ["Auth"] }, })
+        {
+          cookie: t.Object({
+            access: t.Optional(t.String()),
+            refresh: t.String(
+              { minLength: 180, error: 'Refresh token is verplicht' }
+            ),
+          }),
+          response: {
+            204: t.Void(),
+            422: t.Object({}),
+            401: t.Object({
+              message: t.String(),
+              code: t.String(),
+              status: t.String()
+            }),
+          },
+          detail: {
+            tags: ["Auth"],
+            description: 'Set new access & refresh cookies if recent Refresh is valid'
+          },
+        })
       .post('/logout', ({ cookie: { access, refresh } }) => {
         access.remove();
         refresh.remove();
 
         return
       }, {
-
+        response: {
+          200: t.Void()
+        },
         detail: { tags: ["Auth"] },
       })
   )

@@ -35,8 +35,8 @@ export class AuthService {
   async register(input: RegisterInput) {
     const { email, firstname, lastname, mobile, password } = input;
 
-    // Check if user already exists
-    await this.checkUserExists(email);
+    // Check if a user with email or mobile already exists
+    await this.checkUserWithEmailOrMobileExists(email, mobile);
 
     // Hash password
     const salt = await bcrypt.genSalt(10);
@@ -61,6 +61,22 @@ export class AuthService {
       role: user.role,
       createdAt: formatMongooseDate(user.createdAt)
     };
+  }
+
+  async checkUserWithEmailOrMobileExists(email: string, mobile: string) {
+    const existingUser = await User.findOne({
+      $or: [
+        { mobile: mobile },
+        { email: email }
+      ]
+    });
+    if (existingUser) {
+      throw new HttpError("Email of Mobile nummer al in gebruik", {
+        status: 409,
+        code: "USER_EXISTS",
+      });
+    }
+    throw new Error('Method not implemented.');
   }
 
   async login(input: LoginInput) {
@@ -120,7 +136,7 @@ export class AuthService {
   async checkUserExists(email: string) {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      throw new HttpError("User already exists", {
+      throw new HttpError("Email of Mobile nummer al in gebruik", {
         status: 409,
         code: "USER_EXISTS",
       });
@@ -128,7 +144,3 @@ export class AuthService {
   }
 
 }
-
-// Usage in your Route Handler:
-// const authService = await AuthService.getInstance();
-// const users = await AuthService.getAllUsers();
