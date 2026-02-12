@@ -3,6 +3,8 @@ import { t } from 'elysia';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/jwtUtils';
 import { AuthService } from '../services/authServices';
 import { HttpError } from '../errors/http-error';
+import { cookieSchema } from '../endpointSchemas/cookieSchemas';
+import { loginSchema, registerSchema } from '../endpointSchemas/authSchemas';
 
 const authService = await AuthService.getInstance();
 
@@ -37,16 +39,7 @@ export const authRoutes = <T extends BaseApp>(app: T) =>
         return;
       },
         {
-          body: t.Object({
-            email: t.String({
-              format: 'email',
-              error: 'Vul een geldig e-mailadres in, bijvoorbeeld: antonius@voorbeeld.com'
-            }),
-            password: t.String({
-              minLength: 8,
-              error: 'Het wachtwoord moet minimaal 8 karakters lang zijn'
-            })
-          }),
+          body: loginSchema,
           response: {
             200: t.Void(),
             401: t.Object({
@@ -76,15 +69,7 @@ export const authRoutes = <T extends BaseApp>(app: T) =>
         return { user }
       },
         {
-          body: t.Object({
-            email: t.String({ format: "email", error: 'Email is noodzakelijk' }),
-            firstname: t.String({ minLength: 2, error: "Voornaam moet minstens 2 karakter lan zijn" }),
-            lastname: t.String({ minLength: 2, error: "familienaam moet minstens 2 karakter lan zijn" }),
-            mobile: t.String({
-              pattern: '^\\+32\\s\\d{3}\\s\\d{2}\\s\\d{2}\\s\\d{2}$', error: "mobile moet zijn als '+32 000 00 00 00'"
-            }),
-            password: t.String({ minLength: 8, error: 'Wachtwoord moet minstens 8 karakters lang zijn' }),
-          }),
+          body: registerSchema,
           response: {
             201: t.Object({
               user: t.Object({
@@ -105,17 +90,9 @@ export const authRoutes = <T extends BaseApp>(app: T) =>
           detail: { tags: ["Auth"] },
         })
       .post('/refresh', async ({ cookie }) => {
-        const rawToken = cookie.refresh.value
+        const { refresh } = cookie
 
-        // if (rawToken === undefined || (typeof rawToken !== 'string')) {
-        //   throw new HttpError("No Refresh cookie || bad formatted", {
-        //     status: 401,
-        //     code: "INVALID_CREDENTIALS",
-        //   });
-        // }
-
-        const payload = await verifyRefreshToken(rawToken);
-
+        const payload = await verifyRefreshToken(refresh.value);
         const user = await authService.getUserByEmail(payload.sub!);
 
         const accessToken = await signAccessToken({ sub: user.id, email: user.email, role: user.role });
@@ -140,16 +117,16 @@ export const authRoutes = <T extends BaseApp>(app: T) =>
         return
       },
         {
-          cookie: t.Object({
-            access: t.Optional(t.String()),
-            refresh: t.String(
-              { minLength: 180, error: 'Refresh token is verplicht' }
-            ),
-          }),
+          cookie: cookieSchema,
           response: {
             204: t.Void(),
             422: t.Object({}),
             401: t.Object({
+              message: t.String(),
+              code: t.String(),
+              status: t.String()
+            }),
+            404: t.Object({
               message: t.String(),
               code: t.String(),
               status: t.String()

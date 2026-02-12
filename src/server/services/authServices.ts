@@ -1,8 +1,8 @@
 import { connectDB } from '../../db/mongodb'
 import { User } from '@/db/models/user.model';
-import { HttpError } from "../errors/http-error";
 import bcrypt from "bcryptjs";
 import { formatMongooseDate } from '../utils/databaseUtils';
+import { ConflictEmailOrMobileError, ConflictError, NotFoundErrorWithEmail, NotFoundErrorWithId, UnauthorizedError } from '../errorClasses/errors';
 
 
 interface RegisterInput {
@@ -63,39 +63,17 @@ export class AuthService {
     };
   }
 
-  async checkUserWithEmailOrMobileExists(email: string, mobile: string) {
-    const existingUser = await User.findOne({
-      $or: [
-        { mobile: mobile },
-        { email: email }
-      ]
-    });
-    if (existingUser) {
-      throw new HttpError("Email of Mobile nummer al in gebruik", {
-        status: 409,
-        code: "USER_EXISTS",
-      });
-    }
-    throw new Error('Method not implemented.');
-  }
-
   async login(input: LoginInput) {
     const { email, password } = input;
     const user = await this.getUserByEmail(email)
 
     if (!user) {
-      throw new HttpError("User not found", {
-        status: 404,
-        code: "USER NOT FOUND",
-      });
+      throw new NotFoundErrorWithEmail('User', email);
     }
 
     const isValidPassword = await bcrypt.compare(password, user.hashedPassword);
     if (!isValidPassword) {
-      throw new HttpError("Invalid credentials", {
-        status: 401,
-        code: "INVALID_CREDENTIALS",
-      });
+      throw new UnauthorizedError('Wachtwoord of email niet juist')
     }
 
     return {
@@ -105,41 +83,47 @@ export class AuthService {
     };
   }
 
+  async checkUserWithEmailOrMobileExists(email: string, mobile: string) {
+    const existingUser = await User.findOne({
+      $or: [
+        { mobile: mobile },
+        { email: email }
+      ]
+    }).exec();
+
+    if (existingUser) {
+      throw new ConflictEmailOrMobileError('User met email of mobile nummer')
+    }
+    throw new Error('Method not implemented.');
+  }
+
   // Now these functions are super clean!
   async getAllUsers() {
-    return User.find({});
+    const users = await User.find({}).exec();
+    return users;
   }
 
   async getUserById(id: string) {
-    const user = User.findById(id);
+    const user = await User.findById(id).exec();
     if (!user) {
-      throw new HttpError("Not Found", {
-        status: 404,
-        code: "NOT_FOUND",
-      });
+      throw new NotFoundErrorWithId('User', id);
     }
 
     return user;
   }
 
   async getUserByEmail(email: string) {
-    const user = User.findOne({ email });
+    const user = User.findOne({ email }).exec();
     if (!user) {
-      throw new HttpError("Not Found", {
-        status: 404,
-        code: "NOT_FOUND",
-      });
+      throw new NotFoundErrorWithEmail('User', email);
     }
     return user;
   }
 
   async checkUserExists(email: string) {
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email }).exec();
     if (existingUser) {
-      throw new HttpError("Email of Mobile nummer al in gebruik", {
-        status: 409,
-        code: "USER_EXISTS",
-      });
+      throw new ConflictError('User', 'email', email);
     }
   }
 

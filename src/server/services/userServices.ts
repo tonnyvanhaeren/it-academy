@@ -1,6 +1,7 @@
 import { connectDB } from '../../db/mongodb'
 import { User } from '@/db/models/user.model';
-import { HttpError } from "../errors/http-error";
+import { NotFoundErrorWithId, NotFoundErrorWithEmail, ConflictError } from '../errorClasses/errors';
+
 
 export class UserService {
   private static instance: UserService | null = null;
@@ -16,45 +17,32 @@ export class UserService {
   }
 
   async getAllUsers() {
-    return User.find({}).select('_id firstname lastname email mobile role createdAt');
+    const users = await User.find({}).select('_id firstname lastname email mobile role createdAt').exec();
+    return users;
   }
 
 
   async getUserById(id: string) {
-    const user = User.findById(id).select('_id firstname lastname email mobile role createdAt');;
+    const user = await User.findById(id).select('_id firstname lastname email mobile role createdAt').exec();
     if (!user) {
-      throw new HttpError("Not Found", {
-        status: 404,
-        code: "NOT_FOUND",
-      });
+      throw new NotFoundErrorWithId('User', id);
     }
 
     return user;
   }
 
   async getUserByEmail(email: string) {
-    const user = User.findOne({ email });
+    const user = await User.findOne({ email }).exec();
     if (!user) {
-      throw new HttpError("Not Found", {
-        status: 404,
-        code: "NOT_FOUND",
-      });
+      throw new NotFoundErrorWithEmail('User', email);
     }
     return user;
   }
 
   async checkUserExists(email: string) {
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email }).exec();
     if (existingUser) {
-      throw new HttpError("User already exists", {
-        status: 409,
-        code: "USER_EXISTS",
-      });
+      throw new ConflictError('User', 'email', email);
     }
   }
-
 }
-
-// Usage in your Route Handler:
-// const authService = await AuthService.getInstance();
-// const users = await AuthService.getAllUsers();

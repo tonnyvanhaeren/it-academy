@@ -4,6 +4,8 @@ import { t } from 'elysia';
 import { HttpError } from '../errors/http-error';
 import { UserService } from '../services/userServices';
 import { formatMongooseDate, isValidObjectId } from '../utils/databaseUtils'
+import { objectIdSchema, ResponseUserSchema, responseUserSchema, UserId } from '../endpointSchemas/userSchemas';
+import { error } from 'console';
 
 const userService = await UserService.getInstance();
 
@@ -11,8 +13,8 @@ export const usersRoutes = <T extends BaseApp>(app: T) =>
   app.group('/users', app =>
     app
       .get('/me', async ({ requireRole, userId, role }) => {
-        const res = requireRole('student')
-        if (!userId) { }
+        // const res = requireRole('student')
+        //if (!userId) { }
 
         const user = await userService.getUserById(userId!);
 
@@ -30,18 +32,12 @@ export const usersRoutes = <T extends BaseApp>(app: T) =>
       },
         {
           auth: true,
+          // params: UserId,
+          //t.Object({
+          //   userId: t.String({ minLength: 24, error: 'UserId must be string' })
+          // }),
           response: {
-            200: t.Object({
-              user: t.Object({
-                id: t.String(),
-                email: t.String(),
-                firstname: t.String(),
-                lastname: t.String(),
-                mobile: t.String(),
-                role: t.String(),
-                createdAt: t.String()
-              })
-            }),
+            200: responseUserSchema,
             401: t.Object({
               message: t.String(),
               code: t.String(),
@@ -108,12 +104,12 @@ export const usersRoutes = <T extends BaseApp>(app: T) =>
       .get('/id/:id', async ({ requireRole, userId, role, params: { id } }) => {
         const res = requireRole('admin')
 
-        if (!isValidObjectId(id)) {
-          throw new HttpError("Malformed ObjectID parameter", {
-            status: 422,
-            code: "OBJECT ID BAD FORMAT",
-          });
-        }
+        // if (!isValidObjectId(id)) {
+        //   throw new HttpError("Malformed ObjectID parameter", {
+        //     status: 422,
+        //     code: "OBJECT ID BAD FORMAT",
+        //   });
+        // }
 
         const user = await userService.getUserById(id);
         return {
@@ -130,9 +126,7 @@ export const usersRoutes = <T extends BaseApp>(app: T) =>
 
       }, {
         auth: true,
-        params: t.Object({
-          id: t.String({ minLength: 24, error: 'MongoDb ObjectId is required' })
-        }),
+        params: objectIdSchema,
         response: {
           401: t.Object({
             message: t.String(),
@@ -149,17 +143,7 @@ export const usersRoutes = <T extends BaseApp>(app: T) =>
             code: t.String(),
             status: t.String()
           }),
-          200: t.Object({
-            user: t.Object({
-              id: t.String(),
-              email: t.String(),
-              firstname: t.String(),
-              lastname: t.String(),
-              mobile: t.String(),
-              role: t.String(),
-              createdAt: t.String()
-            })
-          })
+          200: responseUserSchema,
         },
         detail: {
           description: 'Haal een user op met het id ...',

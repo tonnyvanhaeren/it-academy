@@ -1,6 +1,8 @@
 import { Elysia, t } from 'elysia'
 import { verifyAccessToken } from '../utils/jwtUtils';
-import { HttpError } from "../errors/http-error";
+//import { HttpError } from "../errors/http-error";
+import { ForbiddenError, UnauthorizedError } from '../errorClasses/errors';
+
 
 type Role = 'student' | 'teacher' | 'admin'
 
@@ -13,10 +15,7 @@ export const authGuardPlugin = new Elysia()
       const access = cookie.access.value
 
       if (!access) {
-        throw new HttpError("Access Token required", {
-          status: 401,
-          code: "INVALID_ACCESS_TOKEN",
-        });
+        throw new UnauthorizedError('Access Cookie is required');
       }
 
       // verify accessToken
@@ -32,11 +31,8 @@ export const authGuardPlugin = new Elysia()
 
         const requiredList = Array.isArray(required) ? required : [required]
         if (!requiredList.includes(role)) {
-          throw new HttpError("Forbidden", {
-            status: 403,
-            code: "INVALID_CREDENTIALS",
-          });
-          //return status(403)
+
+          throw new ForbiddenError(requiredList[0]);
         }
       }
 
