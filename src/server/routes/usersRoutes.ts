@@ -1,53 +1,24 @@
 // src/routes/users.ts
 import type { BaseApp } from '../app'
 import { t } from 'elysia';
-import { HttpError } from '../errors/http-error';
 import { UserService } from '../services/userServices';
-import { formatMongooseDate, isValidObjectId } from '../utils/databaseUtils'
-import { objectIdSchema, ResponseUserSchema, responseUserSchema, UserId } from '../endpointSchemas/userSchemas';
-import { error } from 'console';
+import { objectIdSchema, userSchema } from '../endpointSchemas/userSchemas';
+import { defaultErrorSchema } from '../errorClasses/errors';
 
 const userService = await UserService.getInstance();
 
 export const usersRoutes = <T extends BaseApp>(app: T) =>
   app.group('/users', app =>
     app
-      .get('/me', async ({ requireRole, userId, role }) => {
-        // const res = requireRole('student')
-        //if (!userId) { }
-
-        const user = await userService.getUserById(userId!);
-
-        return {
-          user: {
-            id: user._id.toString(),
-            email: user.email,
-            firstname: user.firstname,
-            lastname: user.lastname,
-            mobile: user.mobile,
-            role: user.role,
-            createdAt: formatMongooseDate(user.createdAt)
-          }
-        };
+      .get('/me', async ({ userId }) => {
+        return { user: await userService.getUserById(userId!) }
       },
         {
-          auth: true,
-          // params: UserId,
-          //t.Object({
-          //   userId: t.String({ minLength: 24, error: 'UserId must be string' })
-          // }),
+          auth: true, // protected route
           response: {
-            200: responseUserSchema,
-            401: t.Object({
-              message: t.String(),
-              code: t.String(),
-              status: t.String()
-            }),
-            404: t.Object({
-              message: t.String(),
-              code: t.String(),
-              status: t.String()
-            }),
+            200: userSchema,
+            401: defaultErrorSchema,
+            404: defaultErrorSchema
           },
           detail: {
             description: 'Haal mijn gegevens op',
@@ -61,17 +32,8 @@ export const usersRoutes = <T extends BaseApp>(app: T) =>
         const users = await userService.getAllUsers();
 
         return {
-          users:
-            users.map(user => ({
-              id: user._id.toString(),
-              firstname: user.firstname,
-              lastname: user.lastname,
-              email: user.email,
-              mobile: user.mobile,
-              role: user.role,
-              createdAt: formatMongooseDate(user.createdAt)
-            })),
-          totaal: users.length,
+          users: users,
+          totaal: users.length
         }
       },
         {
@@ -101,55 +63,23 @@ export const usersRoutes = <T extends BaseApp>(app: T) =>
           }
         }
       )
-      .get('/id/:id', async ({ requireRole, userId, role, params: { id } }) => {
+      .get('/id/:id', async ({ requireRole, params: { id } }) => {
         const res = requireRole('admin')
 
-        // if (!isValidObjectId(id)) {
-        //   throw new HttpError("Malformed ObjectID parameter", {
-        //     status: 422,
-        //     code: "OBJECT ID BAD FORMAT",
-        //   });
-        // }
-
-        const user = await userService.getUserById(id);
-        return {
-          user: {
-            id: user._id.toString(),
-            email: user.email,
-            firstname: user.firstname,
-            lastname: user.lastname,
-            mobile: user.mobile,
-            role: user.role,
-            createdAt: formatMongooseDate(user.createdAt)
-          }
-        }
-
+        return { user: await userService.getUserById(id) }
       }, {
         auth: true,
         params: objectIdSchema,
         response: {
-          401: t.Object({
-            message: t.String(),
-            code: t.String(),
-            status: t.String()
-          }),
-          422: t.Object({
-            message: t.String(),
-            code: t.String(),
-            status: t.String()
-          }),
-          404: t.Object({
-            message: t.String(),
-            code: t.String(),
-            status: t.String()
-          }),
-          200: responseUserSchema,
+          200: userSchema,
+          401: defaultErrorSchema,
+          422: objectIdSchema,
+          404: defaultErrorSchema
         },
         detail: {
           description: 'Haal een user op met het id ...',
           tags: ["Users"],
         }
-
       }
       )
   )

@@ -1,5 +1,23 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
 
+function formatDate(value: Date | string | number | null | undefined): string | null {
+  if (!value) return null;
+
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+
+  // const day = String(d.getDate()).padStart(2, '0');
+  const day = d.getDate().toString(); // zonder leading zero
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as const;
+  const month = monthNames[d.getMonth()];
+  const year = d.getFullYear();
+
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+
+  return `${day}-${month}-${year} ${hours}:${minutes}`;
+}
+
 export interface IUser extends Document {
   _id: Types.ObjectId;
   email: string;
@@ -9,7 +27,9 @@ export interface IUser extends Document {
   hashedPassword: string;
   role: "student" | "teacher" | "admin";
   createdAt: Date;
+  createdAtFormatted?: string | null;
   updatedAt: Date;
+  updatedAtFormatted?: string | null;
 }
 
 const userSchema = new Schema<IUser>(
@@ -24,35 +44,21 @@ const userSchema = new Schema<IUser>(
       enum: ["student", "teacher", "admin"],
       default: "student",
     },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+      get: formatDate as any
+    },
+    updatedAt: {
+      type: Date,
+      default: Date.now,
+      get: formatDate as any
+    }
   },
   {
-    timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true }
+    toJSON: { getters: true, virtuals: true },
+    toObject: { getters: true, virtuals: true }
   }
 );
-
-// Voeg een virtual property toe om de datum te formatteren
-userSchema.virtual('formattedCreatedAt').get(function () {
-  const date = this.createdAt;
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${day}-${month}-${year} ${hours}:${minutes}`;
-});
-
-// Herhaal voor andere datumvelden indien nodig
-userSchema.virtual('formattedUpdatedAt').get(function () {
-  const date = this.updatedAt;
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${day}-${month}-${year} ${hours}:${minutes}`;
-});
-
 
 export const User = mongoose.models.User || mongoose.model<IUser>("User", userSchema);

@@ -21,7 +21,17 @@ export const UserId = t.Object({
   })
 })
 
-export const responseUserSchema = t.Object({
+export type ResponseUser = {
+  id: string,
+  email: string,
+  firstname: string,
+  lastname: string,
+  mobile: string,
+  role: string,
+  createdAt: string
+}
+
+export const userSchema = t.Object({
   user: t.Object({
     id: t.String(),
     email: t.String(),
@@ -47,6 +57,6 @@ export const responseUsersSchema = t.Array(
   })
 )
 
-export type ResponseUserSchema = typeof responseUserSchema.static;
-export type ResponseUsersSchema = typeof responseUsersSchema.static;
-export type ObjectIdSchema = typeof objectIdSchema.static;
+// export type UserSchema = typeof userSchema.static;
+// export type ResponseUsersSchema = typeof responseUsersSchema.static;
+// export type ObjectIdSchema = typeof objectIdSchema.static;

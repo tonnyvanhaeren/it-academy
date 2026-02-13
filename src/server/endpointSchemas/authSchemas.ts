@@ -2,6 +2,7 @@
 
 import { t } from 'elysia';
 
+
 export const loginSchema = t.Object({
   email: t.String({
     format: 'email',

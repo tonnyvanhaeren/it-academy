@@ -1,6 +1,7 @@
 import { connectDB } from '../../db/mongodb'
 import { User } from '@/db/models/user.model';
 import { NotFoundErrorWithId, NotFoundErrorWithEmail, ConflictError } from '../errorClasses/errors';
+import { ResponseUser } from '../endpointSchemas/userSchemas';
 
 
 export class UserService {
@@ -16,14 +17,14 @@ export class UserService {
     return UserService.instance;
   }
 
-  async getAllUsers() {
-    const users = await User.find({}).select('_id firstname lastname email mobile role createdAt').exec();
+  async getAllUsers(): Promise<Array<ResponseUser>> {
+    const users: ResponseUser[] = await User.find({}).select('_id firstname lastname email mobile role createdAt').exec();
+
     return users;
   }
 
-
-  async getUserById(id: string) {
-    const user = await User.findById(id).select('_id firstname lastname email mobile role createdAt').exec();
+  async getUserById(id: string): Promise<ResponseUser> {
+    const user: ResponseUser = await User.findById(id).select('_id firstname lastname email mobile role createdAt').exec();
     if (!user) {
       throw new NotFoundErrorWithId('User', id);
     }

@@ -1,4 +1,49 @@
 
+import { Elysia, t } from 'elysia';
+
+// Schema voor een individuele error
+const SingleErrorSchema = t.Object({
+  path: t.String(),
+  message: t.String(),
+});
+
+// Schema voor de error response
+// 'errors' kan nu zowel een enkel object als een array van objecten zijn
+const ErrorSchema = t.Object({
+  success: t.Boolean(),
+  errors: t.Union([
+    SingleErrorSchema,                // Enkelvoudige error
+    t.Array(SingleErrorSchema),    // Meervoudige errors
+  ]),
+});
+
+// Voorbeeld van hoe je dit type kunt gebruiken
+
+
+// export const ErrorSchema = t.Object({
+//   success: t.Literal(false),
+//   error: t.Object({
+//     code: t.String(),       // Bijv. "NOT_FOUND", "VALIDATION_ERROR"
+//     message: t.String(),   // Beschrijving van de error
+//   })
+// })
+
+export const defaultErrorSchema = t.Object({
+  success: t.Literal(false),
+  error: t.Object({
+    code: t.String(),
+    message: t.String(),
+    details: t.Optional(
+      t.Array(
+        t.Object({
+          field: t.String(),
+          issue: t.String(),
+        })
+      )
+    ),
+  }),
+});
+
 // 404
 export class NotFoundErrorWithId extends Error {
   constructor(entityType: string, id: string) {
@@ -7,6 +52,7 @@ export class NotFoundErrorWithId extends Error {
   }
 }
 
+// 404
 export class NotFoundErrorWithEmail extends Error {
   constructor(entityType: string, email: string) {
     super(`${entityType} met Email ${email} niet gevonnden.`);
