@@ -94,7 +94,7 @@ export class ConflictError extends Error {
 
 export class ConflictEmailOrMobileError extends Error {
   constructor(message: string) {
-    super(`User met ${message} bestaat reeds.`);
+    super(`User met ${message} is reeds geregisteerd.`);
     this.name = "ConflictError";
   }
 }

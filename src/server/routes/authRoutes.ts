@@ -5,6 +5,7 @@ import { AuthService } from '../services/authServices';
 import { cookieSchema } from '../endpointSchemas/cookieSchemas';
 import { loginSchema, registerSchema } from '../endpointSchemas/authSchemas';
 import { defaultErrorSchema } from '../errorClasses/errors';
+import { singleUserResponseSchema } from '../endpointSchemas/userSchemas';
 
 const authService = await AuthService.getInstance();
 
@@ -54,16 +55,15 @@ export const authRoutes = <T extends BaseApp>(app: T) =>
         set.status = 201
         set.headers['location'] = `/users/id/${user.id}`
 
-        return { user }
+        return {
+          success: true,
+          data: user
+        }
       },
         {
           body: registerSchema,
           response: {
-            201: t.Object({
-              user: t.Object({
-                id: t.String(), email: t.String(), firstname: t.String(), lastname: t.String(), mobile: t.String(), role: t.String(), createdAt: t.String()
-              })
-            }),
+            201: singleUserResponseSchema,
             409: defaultErrorSchema,
             422: defaultErrorSchema,
           },

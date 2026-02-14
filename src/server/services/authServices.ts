@@ -92,9 +92,9 @@ export class AuthService {
     }).exec();
 
     if (existingUser) {
-      throw new ConflictEmailOrMobileError('User met email of mobile nummer')
+      throw new ConflictEmailOrMobileError('email of mobile nummer')
     }
-    throw new Error('Method not implemented.');
+    return
   }
 
   // Now these functions are super clean!

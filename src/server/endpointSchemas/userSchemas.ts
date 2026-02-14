@@ -1,6 +1,6 @@
 // server/endpointSchemas/authSchemas
 
-import { t } from 'elysia';
+import { t, Static } from 'elysia';
 
 
 // Regex voor MongoDB ObjectId (24-karakter lange hexadecimale string)
@@ -21,41 +21,76 @@ export const UserId = t.Object({
   })
 })
 
-export type ResponseUser = {
-  id: string,
-  email: string,
-  firstname: string,
-  lastname: string,
-  mobile: string,
-  role: string,
-  createdAt: string
-}
+const UserSchema = t.Object({
+  id: t.String(),
+  email: t.String(),
+  firstname: t.String(),
+  lastname: t.String(),
+  mobile: t.String(),
+  role: t.String(),
+  createdAt: t.String(),
+});
 
-export const userSchema = t.Object({
-  user: t.Object({
-    id: t.String(),
-    email: t.String(),
-    firstname: t.String(),
-    lastname: t.String(),
-    mobile: t.String(),
-    role: t.String(),
-    createdAt: t.String()
-  })
-})
+export const paginatedUsersDataSchema = t.Object({
+  items: t.Array(UserSchema), // Array van users
+  total: t.Number(), // Totaal aantal users
+});
 
-export const responseUsersSchema = t.Array(
-  t.Object({
-    user: t.Object({
-      id: t.String(),
-      email: t.String(),
-      firstname: t.String(),
-      lastname: t.String(),
-      mobile: t.String(),
-      role: t.String(),
-      createdAt: t.String()
-    })
-  })
-)
+export const arrayUserResponseSchema = t.Object({
+  success: t.Literal(true),
+  data: paginatedUsersDataSchema,
+});
+
+export const singleUserResponseSchema = t.Object({
+  success: t.Literal(true),
+  data: UserSchema,
+});
+
+// Voorbeeld:
+type paginatedUserResponse = Static<typeof paginatedUsersDataSchema>;
+
+// Voorbeeld:
+type ArrayUserResponse = Static<typeof arrayUserResponseSchema>;
+
+// Voorbeeld:
+type SingleUserResponse = Static<typeof singleUserResponseSchema>;
+
+
+// export type ResponseUser = {
+//   id: string,
+//   email: string,
+//   firstname: string,
+//   lastname: string,
+//   mobile: string,
+//   role: string,
+//   createdAt: string
+// }
+
+// export const userSchema = t.Object({
+//   user: t.Object({
+//     id: t.String(),
+//     email: t.String(),
+//     firstname: t.String(),
+//     lastname: t.String(),
+//     mobile: t.String(),
+//     role: t.String(),
+//     createdAt: t.String()
+//   })
+// })
+
+// export const responseUsersSchema = t.Array(
+//   t.Object({
+//     user: t.Object({
+//       id: t.String(),
+//       email: t.String(),
+//       firstname: t.String(),
+//       lastname: t.String(),
+//       mobile: t.String(),
+//       role: t.String(),
+//       createdAt: t.String()
+//     })
+//   })
+// )
 
 // export type UserSchema = typeof userSchema.static;
 // export type ResponseUsersSchema = typeof responseUsersSchema.static;
