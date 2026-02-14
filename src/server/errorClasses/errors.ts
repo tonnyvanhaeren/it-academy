@@ -1,4 +1,3 @@
-
 import { Elysia, t } from 'elysia';
 
 // Schema voor een individuele error
@@ -9,8 +8,9 @@ const SingleErrorSchema = t.Object({
 
 // Schema voor de error response
 // 'errors' kan nu zowel een enkel object als een array van objecten zijn
-const ErrorSchema = t.Object({
+export const defaultErrorSchema = t.Object({
   success: t.Boolean(),
+  code: t.String(),
   errors: t.Union([
     SingleErrorSchema,                // Enkelvoudige error
     t.Array(SingleErrorSchema),    // Meervoudige errors
@@ -20,15 +20,15 @@ const ErrorSchema = t.Object({
 // Voorbeeld van hoe je dit type kunt gebruiken
 
 
-// export const ErrorSchema = t.Object({
-//   success: t.Literal(false),
-//   error: t.Object({
-//     code: t.String(),       // Bijv. "NOT_FOUND", "VALIDATION_ERROR"
-//     message: t.String(),   // Beschrijving van de error
-//   })
-// })
+export const OldErrorSchema = t.Object({
+  success: t.Literal(false),
+  error: t.Object({
+    code: t.String(),       // Bijv. "NOT_FOUND", "VALIDATION_ERROR"
+    message: t.String(),   // Beschrijving van de error
+  })
+})
 
-export const defaultErrorSchema = t.Object({
+export const exErrorSchema = t.Object({
   success: t.Literal(false),
   error: t.Object({
     code: t.String(),
@@ -79,7 +79,7 @@ export class UnauthorizedError extends Error {
 //403
 export class ForbiddenError extends Error {
   constructor(role: string) {
-    super(`U hebt niet de nodige role :  ${role}.`);
+    super(`U hebt GEEN ${role} Rechten.`);
     this.name = "ForbiddenError";
   }
 }

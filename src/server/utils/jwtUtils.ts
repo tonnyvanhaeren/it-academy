@@ -1,5 +1,6 @@
 import { jwtVerify, SignJWT, JWTPayload, errors } from "jose";
-import { HttpError } from "../errors/http-error";
+import { UnauthorizedError } from "../errorClasses/errors";
+// import { HttpError } from "../errors/http-error";
 
 
 // Milieuvariabelen (gebruik dotenv in productie!)
@@ -46,12 +47,14 @@ export async function verifyAccessToken(accessToken: string) {
   } catch (err) {
     if (err instanceof errors.JWSSignatureVerificationFailed) {
       // logging somebody is trying access-token with bad secret
+      throw new UnauthorizedError('Invalid Access token SECRET TAMPERED !!!');
     }
 
-    throw new HttpError("Invalid access-token", {
-      status: 401,
-      code: "INVALID_CREDENTIALS",
-    });
+    throw new UnauthorizedError('Invalid Access token');
+    // throw new HttpError("Invalid access-token", {
+    //   status: 401,
+    //   code: "INVALID_CREDENTIALS",
+    // });
   }
 }
 
@@ -66,12 +69,15 @@ export async function verifyRefreshToken(refreshToken: string) {
 
   } catch (err) {
     if (err instanceof errors.JWSSignatureVerificationFailed) {
+      throw new UnauthorizedError('Invalid Refresh token SECRET TAMPERED !!!');
       // logging somebody is trying refresh-token with bad secret
     }
 
-    throw new HttpError("Invalid refresh-token", {
-      status: 401,
-      code: "INVALID_CREDENTIALS",
-    });
+    throw new UnauthorizedError('Invalid Refresh token');
+
+    // throw new HttpError("Invalid refresh-token", {
+    //   status: 401,
+    //   code: "INVALID_CREDENTIALS",
+    // });
   }
 }

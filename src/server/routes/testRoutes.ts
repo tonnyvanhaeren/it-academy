@@ -1,11 +1,17 @@
 import type { BaseApp } from '../app'
+import { t } from 'elysia'
 
 export const testRoutes = <T extends BaseApp>(app: T) =>
   app.group('/test', app =>
     app
-      .get('/public', () => {
+      .get('/public', ({ }) => {
         return { ok: true }
       }, {
+        response: {
+          200: t.Object({
+            ok: t.Boolean()
+          })
+        },
         auth: false,
         detail: { tags: ["Tests"] },
       })

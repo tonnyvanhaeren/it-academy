@@ -39,11 +39,8 @@ export const usersRoutes = <T extends BaseApp>(app: T) =>
         {
           auth: true,
           response: {
-            401: t.Object({
-              message: t.String(),
-              code: t.String(),
-              status: t.String()
-            }),
+            401: defaultErrorSchema,
+            403: defaultErrorSchema,
             200: t.Object({
               users: t.Array(t.Object({
                 id: t.String(),
@@ -73,7 +70,7 @@ export const usersRoutes = <T extends BaseApp>(app: T) =>
         response: {
           200: userSchema,
           401: defaultErrorSchema,
-          422: objectIdSchema,
+          422: defaultErrorSchema,
           404: defaultErrorSchema
         },
         detail: {

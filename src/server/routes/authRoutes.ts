@@ -2,9 +2,9 @@ import type { BaseApp } from '../app'
 import { t } from 'elysia';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/jwtUtils';
 import { AuthService } from '../services/authServices';
-import { HttpError } from '../errors/http-error';
 import { cookieSchema } from '../endpointSchemas/cookieSchemas';
 import { loginSchema, registerSchema } from '../endpointSchemas/authSchemas';
+import { defaultErrorSchema } from '../errorClasses/errors';
 
 const authService = await AuthService.getInstance();
 
@@ -42,21 +42,9 @@ export const authRoutes = <T extends BaseApp>(app: T) =>
           body: loginSchema,
           response: {
             200: t.Void(),
-            401: t.Object({
-              message: t.String(),
-              code: t.String(),
-              status: t.String()
-            }),
-            404: t.Object({
-              message: t.String(),
-              code: t.String(),
-              status: t.String()
-            }),
-            422: t.Object({
-              message: t.String(),
-              code: t.String(),
-              status: t.String()
-            }),
+            401: defaultErrorSchema,
+            404: defaultErrorSchema,
+            422: defaultErrorSchema,
           },
           detail: { tags: ["Auth"], description: 'Set access and refresh cookies when successfull' },
         })
@@ -76,16 +64,8 @@ export const authRoutes = <T extends BaseApp>(app: T) =>
                 id: t.String(), email: t.String(), firstname: t.String(), lastname: t.String(), mobile: t.String(), role: t.String(), createdAt: t.String()
               })
             }),
-            409: t.Object({
-              message: t.String(),
-              code: t.String(),
-              status: t.String()
-            }),
-            422: t.Object({
-              message: t.String(),
-              code: t.String(),
-              status: t.String()
-            })
+            409: defaultErrorSchema,
+            422: defaultErrorSchema,
           },
           detail: { tags: ["Auth"] },
         })

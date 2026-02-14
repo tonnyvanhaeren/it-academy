@@ -6,15 +6,12 @@ export function globalErrorPlugin(app: Elysia) {
   return app.onError(({ code, error, set }) => {
     if (code === 'VALIDATION') {
       set.status = 422;
-      console.log(error)
-      console.log('Value error path :  ', error.valueError?.path)
-      console.log('Value error path :  ', error.valueError?.schema.error)
+
       // Maak een lijst van fouten met je eigen meldingen
       const customErrors = error.all.map(err => {
         // Ensure that err.path is an array before calling join
         const path = Array.isArray(err.path) ? err.path.join('.') : String(err.path).slice(1);
 
-        console.log('path ', path)
         const schemaError = err.schema.error;
         return {
           'field': path,
@@ -24,7 +21,7 @@ export function globalErrorPlugin(app: Elysia) {
 
       return {
         success: false,
-        //status: 422,
+        code: 'VALIDATION_ERROR',
         errors: customErrors
       };
     }
@@ -34,8 +31,8 @@ export function globalErrorPlugin(app: Elysia) {
       set.status = 404;
       return {
         success: false,
+        code: 'NOT_FOUND',
         error: {
-          code: 'NOT_FOUND',
           message: error.message,
         },
       };
@@ -44,8 +41,8 @@ export function globalErrorPlugin(app: Elysia) {
       set.status = 404;
       return {
         success: false,
+        code: 'NOT_FOUND',
         error: {
-          code: 'NOT_FOUND',
           message: error.message,
         },
       };
@@ -55,40 +52,40 @@ export function globalErrorPlugin(app: Elysia) {
       set.status = 401;
       return {
         success: false,
+        code: 'UNAUTHORIZED',
         error: {
-          code: 'UNAUTHORIZED',
           message: error.message,
         },
       };
     }
     // 3.1 Forbidden 403 
     else if (error instanceof ForbiddenError) {
-      set.status = 401;
+      set.status = 403;
       return {
         success: false,
+        code: 'FORBIDDEN',
         error: {
-          code: 'UNAUTHORIZED',
           message: error.message,
         },
       };
     }
     // 3.1 Conflict 409
     else if (error instanceof ConflictError) {
-      set.status = 401;
+      set.status = 409;
       return {
         success: false,
+        code: 'CONFLICT_EMAIL',
         error: {
-          code: 'UNAUTHORIZED',
           message: error.message,
         },
       };
     }
     else if (error instanceof ConflictEmailOrMobileError) {
-      set.status = 401;
+      set.status = 409;
       return {
         success: false,
+        code: 'CONFLICT_EMAIL_OF_MOBILE',
         error: {
-          code: 'UNAUTHORIZED',
           message: error.message,
         },
       };
@@ -108,8 +105,8 @@ export function globalErrorPlugin(app: Elysia) {
       set.status = 400;
       return {
         success: false,
+        code: 'PARSE_ERROR',
         error: {
-          code: 'PARSE_ERROR',
           message: 'Ongeldige JSON-indeling.',
         },
       };
@@ -120,8 +117,8 @@ export function globalErrorPlugin(app: Elysia) {
       console.error('Onverwachte error:', error); // Log voor debugging
       return {
         success: false,
+        code: 'SERVER_ERROR',
         error: {
-          code: 'SERVER_ERROR',
           message: 'Er is een onverwachte fout opgetreden.',
         },
       };
